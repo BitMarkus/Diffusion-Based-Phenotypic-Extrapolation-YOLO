@@ -60,23 +60,27 @@ setting = {
     "train_class_emph": 0.5,
 
     # Training hyperparameters
-    # Choice of optimizer for training. Options include SGD, Adam, AdamW, NAdam, RAdam, RMSProp etc.,
-    # or 'auto' for automatic selection based on model configuration
-    # Set explicitly to 'AdamW' to match the optimizer used in the manuscript.
-    "train_optimizer": 'AdamW',
+    # Choice of optimizer for training. Options include SGD, Adam, AdamW, NAdam, RAdam, RMSProp etc.
+    # Set to 'auto' to let Ultralytics select the optimizer and its hyperparameters.
+    # For this dataset and model, auto selects AdamW with lr0=0.002 and momentum=0.9.
+    # Note: the values below for train_lr0 and train_momentum are ignored when
+    # train_optimizer is set to 'auto'. They are documented here only to show the
+    # effective values that the manuscript reports.
+    "train_optimizer": 'auto',
     # Utilizes a cosine learning rate scheduler, adjusting the learning rate following a cosine curve over epochs
     # Default = False
     "train_cos_lr": True,
-    # Initial learning rate (i.e. SGD=1E-2, Adam=1E-3). Adjusting this value is crucial for the
-    # optimization process, influencing how rapidly model weights are updated
-    # Set to 0.002 to match the value selected by Ultralytics' optimizer=auto mode.
+    # Initial learning rate.
+    # Ignored when train_optimizer is 'auto'.
+    # Effective value with auto mode for this setup: 0.002.
     "train_lr0": 0.002,
     # Final learning rate as a fraction of the initial rate = (lr0 * lrf), used in conjunction with
     # schedulers to adjust the learning rate over time
     # Default = 0.01
     "train_lrf": 0.01,
-    # Momentum factor for SGD or beta1 for Adam optimizers, influencing the incorporation of past gradients in the current update
-    # Set to 0.9 to match the value selected by Ultralytics' optimizer=auto mode.
+    # Momentum factor for SGD or beta1 for Adam optimizers.
+    # Ignored when train_optimizer is 'auto'.
+    # Effective value with auto mode for this setup: 0.9.
     "train_momentum": 0.9,
     # L2 regularization term, penalizing large weights to prevent overfitting
     # Default = 0.0005

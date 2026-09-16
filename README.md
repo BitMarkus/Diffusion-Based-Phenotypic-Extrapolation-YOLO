@@ -256,10 +256,10 @@ The quantitative validation of morphological features in the manuscript was prod
 | Training image size      | 512     |
 | Training epochs          | 1000    |
 | Batch size               | 32      |
-| Optimizer                | AdamW   |
-| Initial learning rate    | 0.005   |
+| Optimizer                | auto (Ultralytics resolves to AdamW) |
+| Initial learning rate    | 0.002 (effective, selected by auto)  |
 | Final learning rate frac | 0.01    |
-| Momentum                 | 0.937   |
+| Momentum                 | 0.9 (effective, selected by auto)    |
 | Weight decay             | 0.0005  |
 | Warmup epochs            | 5.0     |
 | Box loss weight          | 7.5     |
@@ -272,6 +272,22 @@ The quantitative validation of morphological features in the manuscript was prod
 | Maximum detections       | 500     |
 
 The two models were trained independently with the same seed. Both used the same architecture and hyperparameters; only the training dataset and the class name (`nuclei` vs. `filopodia`) differed.
+
+> **Note on the optimizer setting.** In `settings.py`, the training optimizer is
+> set to `"train_optimizer": "auto"`. With this setting, Ultralytics selects the
+> optimizer and its hyperparameters automatically. For the dataset and model used
+> in the manuscript, it selects AdamW with an initial learning rate of 0.002 and a
+> momentum of 0.9. These are the values reported in the manuscript's Methods
+> section, even though `settings.py` lists different values under `train_lr0`
+> and `train_momentum` (those are ignored when `auto` is active and are retained
+> only as documentation).
+>
+> Setting the optimizer explicitly to `'AdamW'` disables the bias learning rate
+> warmup spike that Ultralytics applies at the start of training when `auto` is
+> used. This produces slightly different training dynamics during the first
+> ~5 epochs, although the final metrics converge to the same values. Both settings
+> reproduce the manuscript's reported results. The `auto` setting is used in this
+> repository because it matches the original training runs exactly.
 
 For the manuscript, the `best.pt` checkpoint from each training run was used. Because Ultralytics does not record the exact epoch of the best checkpoint in the weights file, the epoch is not reported.
 

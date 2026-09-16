@@ -8,7 +8,6 @@
 
 # ===== Own Modules =====
 import functions as fcn
-from settings import setting
 from train import Train
 from predict import Predict
 from img_split import Img_Split
