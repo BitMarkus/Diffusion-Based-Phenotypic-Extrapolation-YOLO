@@ -1,0 +1,46 @@
+# Diffusion-Based-Phenotypic-Extrapolation-YOLO
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Program-generated folders (ignored on purpose, see README)
+models/
+output/
+predictions/
+train/
+img_splitter/
+
+# Model weights (not distributed with the repository,
+# available from the corresponding author upon request)
+*.pt
+*.pth
+*.safetensors
+
+# Logs and test artifacts
+*.log
+.pytest_cache/
+.coverage

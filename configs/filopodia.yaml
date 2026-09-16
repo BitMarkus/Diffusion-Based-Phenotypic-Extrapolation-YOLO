@@ -1,0 +1,14 @@
+# Diffusion-Based-Phenotypic-Extrapolation-YOLO
+# Copyright (C) 2026 Markus Reichold <markus.reichold@ur.de>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Dataset configuration for the filopodia detection model.
+# Adjust the paths and class names to match your local dataset layout.
+# The paths are relative to the repository root.
+
+path: ./
+train: train/images/train/
+val: train/images/val/
+
+names:
+  0: filopodia

@@ -1,0 +1,11 @@
+# Diffusion-Based-Phenotypic-Extrapolation-YOLO
+# Copyright (C) 2026 Markus Reichold <markus.reichold@ur.de>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# Core dependencies (pinned to the environment used for the manuscript)
+torch==2.4.1
+ultralytics==8.2.92
+supervision==0.23.0
+opencv-python==4.10.0.84
+numpy>=1.24.0
+pillow>=10.0.0
