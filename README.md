@@ -57,24 +57,25 @@ pip install -r requirements.txt
 
 ```
 Diffusion-Based-Phenotypic-Extrapolation-YOLO/
-├── main.py                 # Entry point, console menu
-├── settings.py             # All configuration
-├── functions.py            # Shared helpers
-├── model.py                # YOLO model loading
-├── detection.py            # Object detection logic
-├── image.py                # Image handling and result export
-├── counter.py              # Onscreen class counter
-├── train.py                # Training entry point
-├── predict.py              # Prediction entry point
+├── main.py                     # Entry point, console menu
+├── settings.py                 # Live configuration (edit this file)
+├── functions.py                # Shared helpers
+├── model.py                    # YOLO model loading
+├── detection.py                # Object detection logic
+├── image.py                    # Image handling and result export
+├── counter.py                  # Onscreen class counter
+├── train.py                    # Training entry point
+├── predict.py                  # Prediction entry point
 ├── configs/
-│   ├── nuclei.yaml         # Reference dataset config for the nuclei model
-│   └── filopodia.yaml      # Reference dataset config for the filopodia model
-├── models/                 # Model checkpoints (created at runtime, not in git)
-│   ├── yolo_models/        # Pretrained YOLOv8 weights
-│   └── custom_models/      # Self-trained weights
-├── train/                  # Training images and labels (created at runtime)
-├── predictions/            # Images for prediction (created at runtime)
-└── output/                 # All program output (created at runtime)
+│   ├── nuclei.yaml             # Reference dataset config for the nuclei model
+│   ├── filopodia.yaml          # Reference dataset config for the filopodia model
+│   └── settings_paper.py       # Frozen settings that produced the manuscript results
+├── models/                     # Model checkpoints (created at runtime, not in git)
+│   ├── yolo_models/            # Pretrained YOLOv8 weights
+│   └── custom_models/          # Self-trained weights
+├── train/                      # Training images and labels (created at runtime)
+├── predictions/                # Images for prediction (created at runtime)
+└── output/                     # All program output (created at runtime)         
 ```
 
 The folders `models/`, `train/`, `predictions/`, and `output/` are created automatically on the first program start and are excluded from git.
@@ -90,7 +91,7 @@ Two settings are particularly important for switching between the two models:
 - `"train_classes"` - the class dict for training. Use `{0: 'nuclei',}` for the nuclei model and `{0: 'filopodia',}` for the filopodia model.
 - `"od_custom_model_name"` - the filename of the trained checkpoint to load for prediction, relative to `models/custom_models/`. For example `nuclei_DIC_best.pt` or `filopodia_DIC_best.pt`.
 
-All other training, augmentation, and inference parameters match the values reported in the manuscript's Methods section and are documented inline in `settings.py`.
+All other training, augmentation, and inference parameters match the values reported in the manuscript's Methods section and are documented inline in `settings.py`. The frozen version used for the manuscript is preserved in `configs/settings_paper.py` (see the end of the "Reproducing the morphological validation results" section).
 
 ---
 
@@ -281,13 +282,6 @@ The two models were trained independently with the same seed. Both used the same
 > section, even though `settings.py` lists different values under `train_lr0`
 > and `train_momentum` (those are ignored when `auto` is active and are retained
 > only as documentation).
->
-> Setting the optimizer explicitly to `'AdamW'` disables the bias learning rate
-> warmup spike that Ultralytics applies at the start of training when `auto` is
-> used. This produces slightly different training dynamics during the first
-> ~5 epochs, although the final metrics converge to the same values. Both settings
-> reproduce the manuscript's reported results. The `auto` setting is used in this
-> repository because it matches the original training runs exactly.
 
 For the manuscript, the `best.pt` checkpoint from each training run was used. Because Ultralytics does not record the exact epoch of the best checkpoint in the weights file, the epoch is not reported.
 
@@ -299,6 +293,33 @@ To reproduce the results:
 4. Use the resulting per-image bounding box text files to compute counts of nuclei or filopodia per image.
 
 The absolute counts in `results.txt` are the input to the frame-wise counts and the statistical comparisons between real WT and KO images presented in the manuscript.
+
+### Frozen paper settings
+
+The exact configuration that produced the manuscript's results is preserved in
+`configs/settings_paper.py`. The live `settings.py` file is the one the program
+actually reads, and it may drift from the frozen version over time — for example,
+while testing new features or adjusting paths for a local setup.
+
+If you want to verify that your configuration matches the paper exactly, diff
+the two files:
+
+```bash
+diff settings.py configs/settings_paper.py
+```
+
+Or, to restore the paper configuration, copy the frozen file to the repository
+root and rename it:
+
+```bash
+cp configs/settings_paper.py settings.py
+```
+
+The frozen file is a complete, drop-in configuration: every setting the current
+code reads is defined, including utilities added after the paper's experiments
+(such as the dataset splitter). Values that differ from the exact paper run —
+for example, utilities that did not exist at the time — are flagged with a
+comment starting with `# PAPER:` in the frozen file.
 
 ---
 

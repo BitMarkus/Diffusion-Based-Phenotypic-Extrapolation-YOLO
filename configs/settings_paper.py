@@ -1,6 +1,30 @@
 # Diffusion-Based-Phenotypic-Extrapolation-YOLO
 # Copyright (C) 2026 Markus Reichold <markus.reichold@ur.de>
 # SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# FROZEN PAPER SETTINGS
+# =====================
+# This file records the exact configuration that produced the results
+# reported in the manuscript. It is not imported by the code — the program
+# reads the live settings.py at the repository root.
+#
+# Its purpose is to let a reader diff their own settings.py against the
+# paper's configuration. To reproduce the paper results:
+#
+#   1. Copy this file to the repository root and rename it to settings.py
+#      (or diff it against the existing settings.py and apply the changes
+#      you care about).
+#   2. Ensure the corresponding trained checkpoints are placed in
+#      models/custom_models/. The paper used filopodia_DIC_ds355_best.pt
+#      and nuclei_DIC_best.pt (both available from the corresponding author
+#      upon reasonable request).
+#   3. Run main.py.
+#
+# A few settings below relate to utilities (such as the dataset splitter)
+# that were added to the repository after the paper's experiments. They are
+# included here so that this file remains a complete, drop-in configuration
+# for the current code. Values that differ from the exact paper run are
+# marked with a comment starting with "# PAPER:".
 
 ####################
 # Program settings #
@@ -151,7 +175,7 @@ setting = {
     "od_pretrained_model_size": "m",
     # Name of custom model, in case 'od_use_pretrained_model' is set to False
     # For the nuclei model: nuclei_DIC_best.pt
-    # For the filopodia model: filopodia_DIC_best.pt
+    # For the filopodia model: filopodia_DIC_ds355_best.pt
     "od_custom_model_name": "filopodia_DIC_ds355_best.pt",
 
     # https://docs.ultralytics.com/usage/cfg/#predict-settings
@@ -189,7 +213,8 @@ setting = {
     # Press any key to close image
     "od_show_predicted_images": False,
     # Set to true if predicted images are supposed to be saved
-    "od_save_predicted_images": True,
+    # PAPER: False (the paper did not save annotated prediction images)
+    "od_save_predicted_images": False,
     # Defines the image size for inference (w, h)
     "od_inf_size_img": (512, 512),
     # Set to true if images for prediction are rectangular,
@@ -203,7 +228,8 @@ setting = {
     # Save bounding box results from predictions as a YOLO-format txt file per image
     # (class_id x_center y_center width height, normalized 0-1).
     # If False, only the summary results.txt is written
-    "od_save_bbox_txt": False,
+    # PAPER: True (the paper used the per-image bounding boxes to compute counts)
+    "od_save_bbox_txt": True,
 
     ### RESULT WINDOW (IMAGES) ###
     # Result window title
@@ -233,6 +259,10 @@ setting = {
     ##################
     # IMAGE SPLITTER #
     ##################
+
+    # Note: the dataset splitter was added to the repository after the paper's
+    # experiments. It is not part of the published pipeline. The settings below
+    # are included here so that this file remains a complete drop-in config.
 
     # Number of datasets to create (1-999)
     "split_num_datasets": 3,

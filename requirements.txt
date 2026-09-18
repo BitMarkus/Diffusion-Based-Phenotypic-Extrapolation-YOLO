@@ -9,3 +9,8 @@ supervision==0.23.0
 opencv-python==4.10.0.84
 numpy>=1.24.0
 pillow>=10.0.0
+
+# Serialization dependency for Ultralytics checkpoints
+# Models trained with Ultralytics 8.2.92 may reference dill internally.
+# Required so that saved .pt files load correctly during inference.
+dill>=0.3.8
