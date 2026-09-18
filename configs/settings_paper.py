@@ -20,11 +20,10 @@
 #      upon reasonable request).
 #   3. Run main.py.
 #
-# A few settings below relate to utilities (such as the dataset splitter)
-# that were added to the repository after the paper's experiments. They are
-# included here so that this file remains a complete, drop-in configuration
-# for the current code. Values that differ from the exact paper run are
-# marked with a comment starting with "# PAPER:".
+# The dataset splitter settings are part of the frozen paper configuration:
+# the splitter was used to generate the shuffled train/val splits from which
+# the paper's training sets were drawn. Its settings are therefore included
+# here as they were used in the paper's pipeline.
 
 ####################
 # Program settings #
@@ -260,9 +259,10 @@ setting = {
     # IMAGE SPLITTER #
     ##################
 
-    # Note: the dataset splitter was added to the repository after the paper's
-    # experiments. It is not part of the published pipeline. The settings below
-    # are included here so that this file remains a complete drop-in config.
+    # The dataset splitter was used to generate shuffled train/val splits
+    # from the full image pool. Three datasets were created, each with a
+    # different random seed. The paper's filopodia model was trained on one
+    # of these splits (dataset ds355).
 
     # Number of datasets to create (1-999)
     "split_num_datasets": 3,

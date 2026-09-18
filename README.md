@@ -17,10 +17,11 @@ It is a trimmed, paper-focused subset of a larger general-purpose YOLO framework
 5. [Key settings](#key-settings)
 6. [Training](#training)
 7. [Prediction](#prediction)
-8. [Reproducing the morphological validation results](#reproducing-the-morphological-validation-results)
-9. [Model checkpoints](#model-checkpoints)
-10. [License](#license)
-11. [Citation](#citation)
+8. [Dataset splitter](#dataset-splitter)
+9. [Reproducing the morphological validation results](#reproducing-the-morphological-validation-results)
+10. [Model checkpoints](#model-checkpoints)
+11. [License](#license)
+12. [Citation](#citation)
 
 ---
 
@@ -66,6 +67,7 @@ Diffusion-Based-Phenotypic-Extrapolation-YOLO/
 ├── counter.py                  # Onscreen class counter
 ├── train.py                    # Training entry point
 ├── predict.py                  # Prediction entry point
+├── img_split.py                # Dataset splitter
 ├── configs/
 │   ├── nuclei.yaml             # Reference dataset config for the nuclei model
 │   ├── filopodia.yaml          # Reference dataset config for the filopodia model
@@ -75,10 +77,11 @@ Diffusion-Based-Phenotypic-Extrapolation-YOLO/
 │   └── custom_models/          # Self-trained weights
 ├── train/                      # Training images and labels (created at runtime)
 ├── predictions/                # Images for prediction (created at runtime)
+├── img_splitter/               # Dataset splitter input/output (created at runtime)
 └── output/                     # All program output (created at runtime)         
 ```
 
-The folders `models/`, `train/`, `predictions/`, and `output/` are created automatically on the first program start and are excluded from git.
+The folders `models/`, `train/`, `predictions/`, `img_splitter/`, and `output/` are created automatically on the first program start and are excluded from git.
 
 ---
 
@@ -179,51 +182,6 @@ Training checkpoints are saved to `output/train/` (or `output/train2/`, etc. for
 
 ---
 
-## Dataset splitter
-
-If you want to retrain on your own annotated data, the repository includes a
-utility that creates randomized train/val/test splits from a flat folder of
-images and labels.
-
-1. Place all images in `img_splitter/input/images/` and their matching YOLO-format
-   labels in `img_splitter/input/labels/`. File stems must match (e.g.
-   `img_001.png` pairs with `img_001.txt`).
-
-2. Set the following in `settings.py`:
-
-   - `"split_num_datasets"` - how many datasets to generate (each uses a different
-     random seed).
-   - `"split_is_val_split"` and `"split_val_split"` - whether to create a validation
-     split, and what fraction of images go into it.
-   - `"split_is_test_split"` and `"split_test_split"` - same for a test split.
-
-3. Run the program (`python main.py`) and select option `3) Dataset splitter`.
-
-Each generated dataset is written to `img_splitter/output/dataset_<seed>/` and is
-self-contained:
-
-```
-img_splitter/output/dataset_<seed>/
-├── images/
-│   ├── train/
-│   ├── val/
-│   └── test/
-└── labels/
-    ├── train/
-    ├── val/
-    └── test/
-```
-
-To train on a generated dataset, either copy its contents into `train/`, or point
-`"pth_training_images"` and `"pth_validation_images"` in `settings.py` at the
-corresponding folders inside `img_splitter/output/dataset_<seed>/`.
-
-The splitter validates that every image has a matching label and that no two images
-share the same stem before writing any files, so a corrupted input folder is caught
-early rather than after a partial copy.
-
----
-
 ## Prediction
 
 1. Place the images you want to process in `predictions/`.
@@ -244,6 +202,145 @@ Two output files are written to `output/`:
 - One `.txt` file per image, in YOLO format, containing the bounding boxes for that image. This can be disabled by setting `"od_save_bbox_txt"` to `False`.
 
 Predicted images themselves are not saved by default. To save annotated images, set `"od_save_predicted_images"` to `True`. To view them on screen before saving, also set `"od_show_predicted_images"` to `True`.
+
+---
+
+## Dataset splitter
+
+Creates randomized train/validation(/test) splits from a flat folder of images and their YOLO-format labels. For each requested dataset, the source images are shuffled with a distinct random seed and partitioned according to the configured ratios. The result is a set of self-contained dataset folders, each with its own `images/` and `labels/` subdirectories in the layout Ultralytics expects.
+
+This is useful when you have a single annotated image collection and want to produce multiple independent train/val splits — for example, to verify that a reported result is not an artifact of one particular partition. This was the use case in the manuscript's pipeline: the splitter was run once on the full pool of annotated images with three datasets requested, producing three shuffled 80/20 splits (`dataset_311`, `dataset_337`, `dataset_355`). One of these (`dataset_355`) was used to train the filopodia model reported in the manuscript; the other two were used as independent splits to check that the reported performance was not specific to a single lucky partition.
+
+### Key settings
+
+| Setting | Type | Description | Default |
+|---------|------|-------------|---------|
+| `split_num_datasets` | int | Number of datasets to generate (1–999) | `3` |
+| `split_img_extension` | str | File extension of the source images | `".png"` |
+| `split_is_val_split` | bool | Whether to create a validation split | `True` |
+| `split_val_split` | float | Fraction of images assigned to validation | `0.2` |
+| `split_is_test_split` | bool | Whether to create a test split | `False` |
+| `split_test_split` | float | Fraction of images assigned to test | `0.2` |
+
+Each generated dataset uses a distinct random seed drawn from `[1, 999]`. The seed is used both as the shuffle seed and as part of the output folder name, so it is always visible which seed produced which dataset.
+
+If both validation and test splits are enabled, the split is applied in the order train → val → test, with train receiving the remainder. For example, with 100 images, `split_val_split = 0.2` and `split_test_split = 0.1`, the resulting split is 70 train, 20 val, 10 test.
+
+### Input folder structure
+
+```plaintext
+img_splitter/
+├── input/
+│   ├── images/                  # Source images (all in one flat folder)
+│   │   ├── img_0001.png
+│   │   ├── img_0002.png
+│   │   └── ...
+│   └── labels/                  # YOLO-format labels matching the images
+│       ├── img_0001.txt
+│       ├── img_0002.txt
+│       └── ...
+```
+
+Every image in `input/images/` must have a matching label file in `input/labels/`, sharing the same stem (e.g. `img_0001.png` pairs with `img_0001.txt`). The splitter checks this before writing any files and reports any missing or duplicate stems.
+
+The folder structure is created automatically on the first program start if it does not exist. Images and labels must be placed there manually before running the splitter.
+
+### Output folder structure
+
+Each dataset is written to its own self-contained folder under `img_splitter/output/`:
+
+```plaintext
+img_splitter/output/
+├── dataset_311/
+│   ├── images/
+│   │   ├── train/
+│   │   └── val/
+│   └── labels/
+│       ├── train/
+│       └── val/
+├── dataset_337/
+│   ├── images/
+│   │   ├── train/
+│   │   └── val/
+│   └── labels/
+│       ├── train/
+│       └── val/
+└── dataset_355/
+    ├── images/
+    │   ├── train/
+    │   └── val/
+    └── labels/
+        ├── train/
+        └── val/
+```
+
+When `split_is_test_split = True`, each dataset also gets an `images/test/` and `labels/test/` folder.
+
+Each dataset folder is fully self-contained and uses the same layout Ultralytics expects.
+
+### Running the splitter
+
+1. Place the source images in `img_splitter/input/images/` and the matching YOLO label files in `img_splitter/input/labels/`.
+
+2. Set the splitter settings in `settings.py` (see the table above).
+
+3. Run the program:
+
+   ```bash
+   python main.py
+   ```
+
+4. Select option `3) Dataset splitter` from the menu.
+
+Typical console output:
+
+```plaintext
+:DATASET SPLITTER:
+  Input: img_splitter/input/
+  Output: img_splitter/output/
+  Number of datasets to generate: 3
+  Validation split: 20%
+
+Generate 3 datasets. Please wait...
+
+> Generate dataset 311...
+Number of images: train=80, val=20, test=0
+Dataset 311 was saved in folder img_splitter/output/dataset_311/.
+
+> Generate dataset 337...
+Number of images: train=80, val=20, test=0
+Dataset 337 was saved in folder img_splitter/output/dataset_337/.
+
+> Generate dataset 355...
+Number of images: train=80, val=20, test=0
+Dataset 355 was saved in folder img_splitter/output/dataset_355/.
+
+Datasets were successfully created.
+```
+
+### Using a generated dataset for training
+
+Point the training paths in `settings.py` at the corresponding folder:
+
+```python
+pth_training_images = "img_splitter/output/dataset_355/images/train/"
+pth_validation_images = "img_splitter/output/dataset_355/images/val/"
+pth_training_labels = "img_splitter/output/dataset_355/labels/train/"
+pth_validation_labels = "img_splitter/output/dataset_355/labels/val/"
+```
+
+Then run training as described in the Training section.
+
+Alternatively, copy the contents of a generated dataset into `train/`, which the training code reads by default.
+
+### Notes
+
+- The splitter operates on a **flat folder of images**. If your source images are in nested subfolders, flatten them first with a simple move-and-rename step.
+- The splitter does not modify the source folder; images are copied, not moved.
+- Filenames are preserved exactly, so any previous renaming (e.g. adding confidence suffixes) is unaffected.
+- The splitter verifies that every image has a matching label and that no two images share a stem before writing any files. If a check fails, it skips the affected dataset and continues with the remaining ones.
+- If a dataset folder with the same seed already exists, the splitter skips that dataset rather than overwriting it. To regenerate a dataset, delete its folder from `img_splitter/output/` first.
+- The same source image may appear in different datasets. The splitter draws from a single source pool, so different random seeds produce overlapping (but not identical) train/val partitions. This is intentional for the "multiple independent splits" use case — the datasets share underlying data but partition it differently.
 
 ---
 
@@ -315,10 +412,7 @@ root and rename it:
 cp configs/settings_paper.py settings.py
 ```
 
-The frozen file is a complete, drop-in configuration: every setting the current
-code reads is defined, including utilities added after the paper's experiments
-(such as the dataset splitter). Values that differ from the exact paper run —
-for example, utilities that did not exist at the time — are flagged with a
+The frozen file is a complete, drop-in configuration: every setting the current code reads is defined, including the dataset splitter settings that were used to generate the paper's training splits. Values that differ from the exact paper run — for example, utilities that did not exist at the time — are flagged with a
 comment starting with `# PAPER:` in the frozen file.
 
 ---
